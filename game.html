@@ -3,61 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vexa Luck | صناديق الحظ</title>
+    <title>Vexa Games | عالم الأرباح</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary: #0ea5e9; --bg: #020617; --card: rgba(30, 41, 59, 0.7); --success: #10b981; --danger: #ef4444; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        :root {
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.4);
+            --secondary: #10b981;
+            --secondary-glow: rgba(16, 185, 129, 0.4);
+            --bg: #020617;
+            --card-bg: rgba(30, 41, 59, 0.5);
+            --accent: #f59e0b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle at top right, #0f172a, #020617);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 100px; /* لترك مساحة للناف بار السفلي */
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* تأثير الخلفية المتحركة (توهج خفيف) */
+        body::before {
+            content: ''; position: absolute; width: 300px; height: 300px;
+            background: var(--primary-glow); border-radius: 50%;
+            filter: blur(100px); top: -100px; left: -100px; opacity: 0.5;
+        }
+
+        /* الهيدر العلوي الاحترافي */
+        .top-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .balance-display {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(255,255,255,0.02));
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            padding: 6px 16px; border-radius: 50px;
+            font-weight: 800; font-size: 15px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+            transition: 0.3s;
+        }
+        .balance-display span { color: #fff; font-family: 'Inter', sans-serif; }
+        .balance-display small { color: rgba(255,255,255,0.8); }
+        .balance-display i { color: var(--primary); font-size: 18px; cursor: pointer; transition: 0.3s; }
+        .balance-display i:hover { color: #fff; transform: scale(1.1); }
+
+        /* البانر الترويجي الفخم بأسلوب 1XBET */
+        .promo-banner {
+            margin: 20px;
+            height: 160px;
+            background: linear-gradient(145deg, #1e293b, #0c4a6e);
+            border-radius: 24px;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 25px; position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .promo-banner::after { content: ''; position: absolute; inset: 0; background: url('https://w0.peakpx.com/wallpaper/705/133/HD-wallpaper-gold-trophy-abstract-trophy-winner.jpg') no-repeat center; background-size: cover; opacity: 0.1; }
+        .promo-banner h2 { margin: 0; font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .promo-banner p { margin: 5px 0 15px; font-size: 14px; color: #e0f2fe; opacity: 0.9; }
         
-        .balance-card { background: var(--card); border-radius: 25px; padding: 20px; text-align: center; margin: 20px auto; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .balance-val { font-size: 28px; font-weight: 900; color: var(--primary); }
+        .promo-btn {
+            width: fit-content; padding: 8px 25px; border-radius: 12px;
+            border: none; background: #fff; color: var(--primary);
+            font-weight: 900; font-size: 14px; font-family: 'Cairo';
+            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s;
+        }
+        .promo-btn:hover { background: var(--secondary); color: #fff; transform: translateY(-2px); }
 
-        /* منطقة الرهان */
-        .bet-area { margin: 20px 0; text-align: center; width: 100%; max-width: 400px; }
-        .bet-input-container { position: relative; display: inline-block; width: 80%; }
-        .bet-input-container input { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #334155; background: #0f172a; color: white; font-size: 20px; font-weight: 900; text-align: center; outline: none; transition: 0.3s; }
-        .bet-input-container input:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); }
-        .win-estimate { color: var(--success); font-size: 14px; margin-top: 10px; font-weight: 700; opacity: 0.9; }
+        /* الأقسام */
+        .section-title { padding: 0 20px; margin-top: 35px; margin-bottom: 15px; }
+        .section-title h3 { font-size: 19px; font-weight: 800; border-right: 5px solid var(--primary); padding-right: 12px; }
 
-        .game-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 400px; margin: 25px auto; }
-        .box { height: 110px; background: #1e293b; border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 40px; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 2px solid transparent; }
-        .box.active { border-color: var(--primary); background: rgba(14, 165, 233, 0.1); transform: translateY(-5px); }
-        .box.win { background: var(--success) !important; color: white; box-shadow: 0 0 20px var(--success); }
-        .box.lose { background: var(--danger) !important; opacity: 0.5; }
+        /* شبكة الألعاب النيون */
+        .games-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 18px; padding: 15px 20px;
+        }
 
-        .play-now { width: 100%; max-width: 350px; padding: 20px; border-radius: 20px; border: none; background: linear-gradient(135deg, var(--primary), #6366f1); color: white; font-weight: 900; font-size: 18px; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3); }
-        .play-now:disabled { opacity: 0.5; filter: grayscale(1); }
+        .game-card {
+            background: var(--card-bg); backdrop-filter: blur(10px);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.06);
+            overflow: hidden; position: relative;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        /* توهج أزرق نيون خفيف عند الاقتراب */
+        .game-card:hover { border-color: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
+        .game-card:active { transform: scale(0.97); }
+
+        .game-img {
+            height: 120px; display: flex; align-items: center; justify-content: center;
+            font-size: 45px; position: relative;
+        }
+        /* تلوين نيون لأيقونات الألعاب */
+        .game-card:nth-child(1) .game-img { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-bottom: 2px solid rgba(239, 68, 68, 0.3); }
+        .game-card:nth-child(2) .game-img { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid rgba(245, 158, 11, 0.3); }
+        .game-card:nth-child(3) .game-img { color: #10b981; background: rgba(16, 185, 129, 0.1); border-bottom: 2px solid rgba(16, 185, 129, 0.3); }
+        .game-card:nth-child(4) .game-img { color: #a855f7; background: rgba(168, 85, 247, 0.1); border-bottom: 2px solid rgba(168, 85, 247, 0.3); }
+
+        .game-info { padding: 15px; text-align: center; }
+        .game-info span { display: block; font-weight: 800; font-size: 15px; color: #fff; }
+        .game-info small { color: var(--text-dim); font-size: 11px; opacity: 0.7; }
+
+        .play-btn {
+            background: linear-gradient(90deg, var(--primary), #0284c7);
+            color: white; border: none; width: 100%; padding: 10px;
+            font-weight: 900; font-size: 14px; font-family: 'Cairo'; cursor: pointer;
+            transition: 0.3s;
+        }
+        .game-card:hover .play-btn { background: var(--secondary); }
+
+        /* ناف بار سفلي زجاجي (نفس صفحة المحفظة) */
+        .bottom-nav { 
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            height: 70px; background: rgba(15, 23, 42, 0.85); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; justify-content: space-around; align-items: center; 
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 25px;
+            z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+
+        /* تأثير تحميل الأنيميشن */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .games-grid > * { animation: fadeIn 0.5s ease backwards; }
+        .games-grid > *:nth-child(1) { animation-delay: 0.1s; }
+        .games-grid > *:nth-child(2) { animation-delay: 0.2s; }
+        .games-grid > *:nth-child(3) { animation-delay: 0.3s; }
+        .games-grid > *:nth-child(4) { animation-delay: 0.4s; }
+
     </style>
 </head>
 <body>
 
-    <div class="balance-card">
-        <p style="margin:0; font-size: 14px; color: #94a3b8;">رصيدك المتوفر</p>
-        <div class="balance-val"><span id="user-balance">0.00</span> <small style="font-size: 14px;">ج.م</small></div>
-    </div>
-
-    <div class="bet-area">
-        <p style="font-size: 14px; margin-bottom: 10px; color: #94a3b8;">أدخل مبلغ الرهان</p>
-        <div class="bet-input-container">
-            <input type="number" id="bet-amount" value="10" min="1" oninput="updateWinEstimate()">
+    <nav class="top-nav">
+        <div style="font-weight: 900; font-size: 22px; color: var(--primary); text-shadow: 0 0 10px var(--primary-glow);">VEXA <span style="color:white">BET</span></div>
+        <div class="balance-display">
+            <span id="user-balance">0.00</span>
+            <small>ج.م</small>
+            <i class="fas fa-plus-circle" onclick="location.href='deposit.html'"></i>
         </div>
-        <div class="win-estimate" id="win-text">الجائزة عند الفوز: 12.00 ج.م</div>
+    </nav>
+
+    <div class="promo-banner">
+        <h2>مكافأة 200%</h2>
+        <p>على أول عملية إيداع لك اليوم! لا تفوت الفرصة.</p>
+        <button class="promo-btn" onclick="location.href='deposit.html'">احصل عليها الآن</button>
     </div>
 
-    <div class="game-grid">
-        <div class="box" onclick="selectBox(0)" id="box-0"><i class="fas fa-question"></i></div>
-        <div class="box" onclick="selectBox(1)" id="box-1"><i class="fas fa-question"></i></div>
-        <div class="box" onclick="selectBox(2)" id="box-2"><i class="fas fa-question"></i></div>
+    <div class="section-title">
+        <h3>الأكثر شعبية</h3>
     </div>
 
-    <button class="play-now" id="play-btn" disabled onclick="startGame()">افتح الصندوق المختار</button>
+    <div class="games-grid">
+        <div class="game-card" onclick="location.href='crash.html'">
+            <div class="game-img"><i class="fas fa-plane-up"></i></div>
+            <div class="game-info">
+                <span>Vexa Crash</span>
+                <small>ضاعف أموالك في ثواني</small>
+            </div>
+            <button class="play-btn">العب الآن</button>
+        </div>
+
+        <div class="game-card" onclick="location.href='dice.html'">
+            <div class="game-img"><i class="fas fa-dice"></i></div>
+            <div class="game-info">
+                <span>Dice Under/Over</span>
+                <small>توقع الرقم واربح فوراً</small>
+            </div>
+            <button class="play-btn">العب الآن</button>
+        </div>
+
+        <div class="game-card" onclick="location.href='maine.html'">
+            <div class="game-img"><i class="fas fa-bomb"></i></div>
+            <div class="game-info">
+                <span>Vexa Mines</span>
+                <small>تجنب القنابل وابحث عن الكنز</small>
+            </div>
+            <button class="play-btn">العب الآن</button>
+        </div>
+
+        <div class="game-card" onclick="location.href='spin.html'">
+            <div class="game-img"><i class="fas fa-dot-circle fa-spin"></i></div>
+            <div class="game-info">
+                <span>Wheel of Luck</span>
+                <small>عجلة الحظ لربح الهدايا</small>
+            </div>
+            <button class="play-btn">العب الآن</button>
+        </div>
+    </div>
+
+   
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, updateDoc, increment, runTransaction } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
@@ -70,94 +229,18 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let balance = 0;
-    let selectedIndex = null;
-    let isPlaying = false;
-    let attemptCounter = parseInt(sessionStorage.getItem('v_luck_idx') || "0");
-
-    auth.onAuthStateChanged(user => {
+    // جلب الرصيد الحقيقي لايف من الفايربيز (walletBalance)
+    onAuthStateChanged(auth, (user) => {
         if (user) {
-            onSnapshot(doc(db, "users", user.uid), (snap) => {
-                balance = snap.data().walletBalance || 0;
-                document.getElementById('user-balance').innerText = balance.toFixed(2);
+            onSnapshot(doc(db, "users", user.uid), (doc) => {
+                if (doc.exists()) {
+                    // الـ Screenshot الأخيرة بينت إن الرصيد في حقل اسمه walletBalance
+                    const balance = doc.data().walletBalance || 0;
+                    document.getElementById('user-balance').innerText = balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+                }
             });
         }
     });
-
-    // تحديث نص الجائزة المتوقعة
-    window.updateWinEstimate = () => {
-        const amt = parseFloat(document.getElementById('bet-amount').value) || 0;
-        const win = amt * 1.2;
-        document.getElementById('win-text').innerText = `الجائزة عند الفوز: ${win.toFixed(2)} ج.م`;
-    };
-
-    window.selectBox = (i) => {
-        if(isPlaying) return;
-        selectedIndex = i;
-        document.querySelectorAll('.box').forEach(b => b.classList.remove('active'));
-        document.getElementById(`box-${i}`).classList.add('active');
-        document.getElementById('play-btn').disabled = false;
-    };
-
-    window.startGame = async () => {
-        const bet = parseFloat(document.getElementById('bet-amount').value);
-        if (isNaN(bet) || bet <= 0) return Swal.fire('خطأ', 'أدخل مبلغاً صحيحاً', 'error');
-        if (bet > balance) return Swal.fire('عفواً', 'رصيدك غير كافٍ', 'error');
-
-        isPlaying = true;
-        document.getElementById('play-btn').disabled = true;
-        document.getElementById('play-btn').innerText = "جاري فتح الصندوق...";
-
-        // الخوارزمية: فوز مرة كل 3 محاولات
-        attemptCounter++;
-        sessionStorage.setItem('v_luck_idx', attemptCounter);
-        
-        let winningIndex;
-        if (attemptCounter % 3 === 0) {
-            winningIndex = selectedIndex; // فوز مضمون لضمان الاستمرارية
-        } else {
-            // نسبة فوز عشوائية 15% في المرات الأخرى
-            winningIndex = (Math.random() < 0.15) ? selectedIndex : (selectedIndex + 1) % 3;
-        }
-
-        try {
-            await runTransaction(db, async (ts) => {
-                ts.update(doc(db, "users", auth.currentUser.uid), { walletBalance: increment(-bet) });
-            });
-
-            setTimeout(async () => {
-                const boxes = document.querySelectorAll('.box');
-                const isWin = selectedIndex === winningIndex;
-
-                boxes.forEach((box, i) => {
-                    box.innerHTML = (i === winningIndex) ? '<i class="fas fa-gem"></i>' : '<i class="fas fa-times"></i>';
-                    if (i === winningIndex) box.classList.add('win');
-                    else if (i === selectedIndex) box.classList.add('lose');
-                });
-
-                if (isWin) {
-                    const winTotal = bet * 1.2;
-                    await updateDoc(doc(db, "users", auth.currentUser.uid), { walletBalance: increment(winTotal) });
-                    Swal.fire({ title: 'مبروك! 🎉', text: `ربحت ${winTotal.toFixed(2)} ج.م`, icon: 'success' });
-                } else {
-                    Swal.fire({ title: 'حظ أوفر', text: 'كانت قريبة! حاول مرة أخرى', icon: 'error' });
-                }
-
-                setTimeout(() => {
-                    boxes.forEach(b => { b.className = 'box'; b.innerHTML = '<i class="fas fa-question"></i>'; });
-                    isPlaying = false;
-                    selectedIndex = null;
-                    document.getElementById('play-btn').innerText = "افتح الصندوق المختار";
-                    document.getElementById('play-btn').disabled = true;
-                }, 2500);
-
-            }, 1000);
-
-        } catch (e) {
-            isPlaying = false;
-            document.getElementById('play-btn').disabled = false;
-        }
-    };
 </script>
 </body>
 </html>
