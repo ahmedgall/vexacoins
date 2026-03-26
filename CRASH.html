@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexa Crash | طير واربح</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #0ea5e9; --bg: #020617; --card: rgba(30, 41, 59, 0.6);
+            --success: #10b981; --danger: #ef4444; --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text);
+            margin: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh;
+        }
+
+        /* منطقة الجرافيك */
+        .game-area {
+            flex-grow: 1; position: relative; overflow: hidden;
+            background: radial-gradient(circle at bottom left, #0f172a, #020617);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #multiplier {
+            font-size: clamp(60px, 15vw, 90px); font-weight: 900; z-index: 10;
+            text-shadow: 0 0 30px var(--primary); transition: 0.05s;
+        }
+
+        .plane {
+            position: absolute; bottom: 20%; left: 10%; font-size: 50px;
+            color: var(--primary); filter: drop-shadow(0 0 15px var(--primary));
+            transition: all 0.1s linear; transform: rotate(-45deg); z-index: 5;
+        }
+
+        /* لوحة التحكم */
+        .controls {
+            background: var(--card); backdrop-filter: blur(20px);
+            padding: 25px; border-top: 2px solid rgba(255,255,255,0.05);
+            border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+        }
+
+        .input-box {
+            display: flex; gap: 10px; margin-bottom: 15px;
+        }
+
+        input {
+            flex-grow: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 15px; border-radius: 15px; font-size: 20px; font-weight: 700; text-align: center;
+        }
+
+        .btn-main {
+            width: 100%; padding: 18px; border-radius: 18px; border: none;
+            font-size: 22px; font-weight: 900; font-family: 'Cairo'; cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .bet-mode { background: var(--primary); color: white; box-shadow: 0 5px 20px var(--primary); }
+        .cashout-mode { background: var(--success); color: white; box-shadow: 0 5px 20px var(--success); }
+        
+        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+        .balance { background: rgba(14, 165, 233, 0.1); padding: 6px 15px; border-radius: 50px; border: 1px solid var(--primary); font-weight: 800; }
+
+        .crashed { color: var(--danger) !important; text-shadow: 0 0 40px var(--danger) !important; animation: explode 0.4s; }
+        @keyframes explode { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <i class="fas fa-chevron-right" onclick="history.back()" style="font-size: 20px; cursor: pointer;"></i>
+        <div style="font-weight: 900; color: var(--primary);">VEXA CRASH</div>
+        <div class="balance"><span id="user-balance">0.00</span> <small>ج.م</small></div>
+    </div>
+
+    <div class="game-area" id="shake-area">
+        <div id="multiplier">1.00x</div>
+        <i class="fas fa-plane plane" id="plane-obj"></i>
+    </div>
+
+    <div class="controls">
+        <div class="input-box">
+            <input type="number" id="bet-amount" value="10" min="1">
+        </div>
+        <button id="action-btn" class="btn-main bet-mode">ابدأ الرهان</button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let balance = 0, uid = "", isRunning = false, currentMult = 1.0, interval;
+    const btn = document.getElementById('action-btn');
+    const multTxt = document.getElementById('multiplier');
+    const plane = document.getElementById('plane-obj');
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            uid = user.uid;
+            onSnapshot(doc(db, "users", uid), (d) => {
+                balance = d.data().walletBalance || 0;
+                document.getElementById('user-balance').innerText = balance.toFixed(2);
+            });
+        }
+    });
+
+    // --- الخوارزمية الخبيثة ---
+    function getSecretCrashPoint() {
+        const r = Math.random() * 100;
+        if (r < 12) return (Math.random() * 0.05 + 1.00).toFixed(2); // 12% خسارة فورية
+        if (r < 80) return (Math.random() * 1.2 + 1.1).toFixed(2);   // 68% خسارة بين 1.1 و 2.3
+        return (Math.random() * 5 + 3).toFixed(2);                   // الباقي أرقام عالية للطعم
+    }
+
+    btn.onclick = async () => {
+        if (!isRunning) {
+            const amount = parseFloat(document.getElementById('bet-amount').value);
+            if (amount > balance || amount <= 0) return Swal.fire('عفواً', 'رصيدك غير كافٍ', 'error');
+
+            isRunning = true;
+            btn.innerText = "كاش أوت (0.00)";
+            btn.className = "btn-main cashout-mode";
+            
+            await updateDoc(doc(db, "users", uid), { walletBalance: increment(-amount) });
+            startFlight(amount);
+        } else {
+            cashOut();
+        }
+    };
+
+    function startFlight(bet) {
+        currentMult = 1.0;
+        multTxt.classList.remove('crashed');
+        const crashAt = parseFloat(getSecretCrashPoint());
+
+        interval = setInterval(() => {
+            // سرعة العداد تزيد بعد 2x
+            currentMult += (currentMult < 2) ? 0.01 : 0.04;
+            multTxt.innerText = currentMult.toFixed(2) + 'x';
+            btn.innerText = `كاش أوت (${(bet * currentMult).toFixed(2)})`;
+
+            // تحريك الطيارة
+            let p = (currentMult - 1) * 12;
+            plane.style.bottom = (20 + p) + '%';
+            plane.style.left = (10 + p * 1.5) + '%';
+
+            if (currentMult >= crashAt) {
+                crash();
+            }
+        }, 70);
+    }
+
+    async function cashOut() {
+        clearInterval(interval);
+        const bet = parseFloat(document.getElementById('bet-amount').value);
+        const win = bet * currentMult;
+        
+        await updateDoc(doc(db, "users", uid), { walletBalance: increment(win) });
+        Swal.fire('عاش يا بطل!', `ربحت ${win.toFixed(2)} ج.م`, 'success');
+        resetGame();
+    }
+
+    function crash() {
+        clearInterval(interval);
+        multTxt.innerText = "CRASHED!";
+        multTxt.classList.add('crashed');
+        btn.classList.add('btn-disabled');
+        btn.disabled = true;
+        
+        setTimeout(() => {
+            resetGame();
+            btn.disabled = false;
+            btn.classList.remove('btn-disabled');
+        }, 2000);
+    }
+
+    function resetGame() {
+        clearInterval(interval);
+        isRunning = false;
+        btn.innerText = "ابدأ الرهان";
+        btn.className = "btn-main bet-mode";
+        plane.style.bottom = '20%'; plane.style.left = '10%';
+        if(multTxt.innerText !== "CRASHED!") multTxt.innerText = "1.00x";
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexa Mines | الألغام الاحترافية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #020617;
+            --card-glass: rgba(30, 41, 59, 0.4);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: white; margin: 0; padding: 0;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        /* الهيدر العلوي */
+        .top-bar {
+            padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .balance-pill {
+            background: linear-gradient(90deg, var(--primary), #0284c7);
+            padding: 6px 18px; border-radius: 50px;
+            font-weight: 900; font-size: 14px;
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.3);
+        }
+
+        /* منطقة اللعب */
+        .game-wrapper {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+
+        .mines-container {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+            width: 100%; max-width: 350px;
+            background: var(--card-glass); padding: 15px;
+            border-radius: 25px; border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .cell {
+            aspect-ratio: 1; background: #0f172a; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; cursor: pointer; transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+        .cell:hover { background: #1e293b; transform: scale(1.05); }
+        .cell.active { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: var(--success); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+        .cell.boom { background: rgba(239, 68, 68, 0.2); color: var(--danger); border-color: var(--danger); }
+
+        /* لوحة التحكم السفلي */
+        .control-panel {
+            background: rgba(15, 23, 42, 0.9);
+            padding: 25px; border-radius: 30px 30px 0 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            width: 100%; box-sizing: border-box;
+        }
+
+        .input-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .input-group { flex: 1; }
+        .input-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: 700; }
+        
+        .styled-input {
+            width: 100%; background: #020617; border: 1px solid #334155;
+            color: white; padding: 12px; border-radius: 15px;
+            font-family: 'Cairo'; font-weight: 700; text-align: center;
+            box-sizing: border-box;
+        }
+
+        .main-btn {
+            width: 100%; padding: 16px; border-radius: 18px; border: none;
+            font-size: 18px; font-weight: 900; font-family: 'Cairo';
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-play { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3); }
+        .btn-cash { background: var(--success); color: white; display: none; }
+        .btn-play:active { transform: scale(0.96); }
+
+        /* أنيميشن */
+        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+        .cell i { animation: pop 0.2s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <i class="fas fa-arrow-right" onclick="history.back()"></i>
+        <div style="font-weight: 900; letter-spacing: 1px;">VEXA <span style="color:var(--primary)">MINES</span></div>
+        <div class="balance-pill"><span id="bal">0.00</span> <small>ج.م</small></div>
+    </div>
+
+    <div class="game-wrapper">
+        <div class="mines-container" id="grid">
+            </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="input-row">
+            <div class="input-group">
+                <label>مبلغ الرهان</label>
+                <input type="number" id="bet" class="styled-input" value="10">
+            </div>
+            <div class="input-group">
+                <label>عدد القنابل</label>
+                <select id="m-count" class="styled-input">
+                    <option value="1">1</option>
+                    <option value="3" selected>3</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="start" class="main-btn btn-play">بدأ التحدي</button>
+        <button id="cash" class="main-btn btn-cash">كاش أوت (0.00)</button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let balance = 0, uid = "", playing = false, betAmt = 0, mines = [], revealed = 0;
+    const grid = document.getElementById('grid');
+    const startBtn = document.getElementById('start');
+    const cashBtn = document.getElementById('cash');
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            uid = user.uid;
+            onSnapshot(doc(db, "users", uid), (d) => {
+                balance = d.data().walletBalance || 0;
+                document.getElementById('bal').innerText = balance.toFixed(2);
+            });
+        }
+    });
+
+    function initGrid() {
+        grid.innerHTML = '';
+        for(let i=0; i<25; i++) {
+            const div = document.createElement('div');
+            div.className = 'cell';
+            div.onclick = () => handleMove(i);
+            grid.appendChild(div);
+        }
+    }
+    initGrid();
+
+    startBtn.onclick = async () => {
+        betAmt = parseFloat(document.getElementById('bet').value);
+        if(betAmt > balance || betAmt <= 0) return Swal.fire('خطأ', 'رصيدك لا يكفي', 'error');
+
+        await updateDoc(doc(db, "users", uid), { walletBalance: increment(-betAmt) });
+        
+        playing = true; revealed = 0;
+        mines = Array.from({length: parseInt(document.getElementById('m-count').value)}, () => Math.floor(Math.random()*25));
+        
+        startBtn.style.display = 'none';
+        cashBtn.style.display = 'block';
+        cashBtn.innerText = `كاش أوت (${betAmt.toFixed(2)})`;
+        initGrid();
+    };
+
+    async function handleMove(idx) {
+        if(!playing) return;
+        const cell = grid.children[idx];
+        if(cell.classList.contains('active')) return;
+
+        // الخوارزمية الخبيثة (تبديل اللغم)
+        if ((betAmt >= 50 && revealed >= 1) || (revealed >= 3 && Math.random() < 0.6)) {
+            if(!mines.includes(idx)) { mines.pop(); mines.push(idx); }
+        }
+
+        if(mines.includes(idx)) {
+            cell.classList.add('boom');
+            cell.innerHTML = '<i class="fas fa-bomb"></i>';
+            end(false);
+        } else {
+            cell.classList.add('active');
+            cell.innerHTML = '<i class="fas fa-gem"></i>';
+            revealed++;
+            let currentWin = betAmt * (1 + (revealed * (mines.length/15)));
+            cashBtn.innerText = `كاش أوت (${currentWin.toFixed(2)})`;
+        }
+    }
+
+    cashBtn.onclick = async () => {
+        let finalWin = betAmt * (1 + (revealed * (mines.length/15)));
+        await updateDoc(doc(db, "users", uid), { walletBalance: increment(finalWin) });
+        Swal.fire('مبروك!', `ربحت ${finalWin.toFixed(2)} ج.م`, 'success');
+        end(true);
+    };
+
+    function end(win) {
+        playing = false;
+        mines.forEach(m => {
+            if(!grid.children[m].innerHTML) {
+                grid.children[m].innerHTML = '<i class="fas fa-bomb"></i>';
+                grid.children[m].style.opacity = '0.5';
+            }
+        });
+        setTimeout(() => {
+            startBtn.style.display = 'block';
+            cashBtn.style.display = 'none';
+        }, 1500);
+    }
+</script>
+</body>
+</html>
