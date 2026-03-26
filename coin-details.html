@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تداول | Vexa Market</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --primary-glow: rgba(14, 165, 233, 0.2);
+            --bg-dark: #020617;
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle at 0% 0%, #0f172a 0%, #020617 100%);
+            color: var(--text-main);
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* تحسين الهيدر */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 30px 20px;
+        }
+        
+        .back-btn {
+            width: 45px; height: 45px; border-radius: 15px;
+            background: var(--card-bg); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: white; text-decoration: none; backdrop-filter: blur(10px);
+            transition: 0.3s;
+        }
+        .back-btn:active { transform: scale(0.9); }
+
+        .coin-identity h1 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+        .coin-identity span { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+
+        /* منطقة السعر الرئيسي */
+        .price-hero { text-align: center; margin: 10px 0 30px; }
+        .current-price { 
+            font-family: 'Inter', sans-serif; 
+            font-size: 48px; font-weight: 800; margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+        .price-change { 
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 700; padding: 6px 14px; border-radius: 12px; 
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .up { color: var(--success); background: rgba(16, 185, 129, 0.12); }
+        .down { color: var(--danger); background: rgba(239, 68, 68, 0.12); }
+
+        /* الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px; margin-bottom: 25px; }
+        .stat-card { 
+            background: var(--card-bg); padding: 18px; border-radius: 20px; 
+            border: 1px solid var(--border); backdrop-filter: blur(10px);
+        }
+        .stat-card small { display: block; color: var(--text-dim); font-size: 12px; margin-bottom: 6px; font-weight: 600; }
+        .stat-card b { font-family: 'Inter', sans-serif; font-size: 17px; color: #fff; }
+
+        /* الرسم البياني */
+        .chart-container { 
+            background: var(--card-bg); border-radius: 30px; padding: 15px 5px; 
+            border: 1px solid var(--border); margin: 0 20px 120px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        /* الأزرار العائمة */
+        .bottom-actions {
+            position: fixed; bottom: 30px; left: 20px; right: 20px;
+            display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 15px; z-index: 100;
+        }
+        .action-float {
+            padding: 20px; border: none; border-radius: 22px; color: white;
+            font-size: 17px; font-weight: 800; cursor: pointer; display: flex; 
+            align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4); transition: 0.3s;
+        }
+        .btn-buy-trigger { background: linear-gradient(135deg, var(--success), #059669); }
+        .btn-sell-trigger { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-dim); opacity: 0.8; }
+        .action-float:active { transform: scale(0.95); }
+
+        /* اللوحة المنبثقة (Modal) */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px); display: none; z-index: 900; animation: fadeIn 0.3s;
+        }
+        .trade-modal {
+            position: fixed; bottom: -100%; left: 0; right: 0;
+            background: #0f172a; border-radius: 35px 35px 0 0;
+            padding: 30px 25px 50px; z-index: 1000;
+            transition: 0.5s cubic-bezier(0.17, 0.84, 0.44, 1);
+            border-top: 2px solid var(--primary);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        .trade-modal.active { bottom: 0; }
+        .modal-handle { width: 50px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: -10px auto 30px; }
+
+        /* مدخلات الشراء */
+        .input-wrapper { background: #020617; border-radius: 20px; padding: 20px; border: 1.5px solid var(--border); margin-bottom: 25px; transition: 0.3s; }
+        .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 15px var(--primary-glow); }
+        .input-header { display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-dim); font-size: 13px; font-weight: 600; }
+        .input-main { display: flex; align-items: center; gap: 10px; }
+        .input-main input {
+            background: none; border: none; color: white; font-size: 28px; font-weight: 700;
+            font-family: 'Inter', sans-serif; width: 100%; outline: none;
+        }
+        .token-badge { background: var(--primary-dim); color: var(--primary); padding: 5px 12px; border-radius: 10px; font-weight: 700; font-size: 14px; }
+
+        .total-info { text-align: center; margin-bottom: 30px; }
+        .total-label { color: var(--text-dim); font-size: 14px; margin-bottom: 5px; display: block; }
+        .total-amount { font-family: 'Inter', sans-serif; font-size: 32px; font-weight: 800; color: #fff; }
+
+        .confirm-btn { 
+            width: 100%; padding: 20px; background: var(--primary); border: none; 
+            border-radius: 22px; color: white; font-weight: 800; font-size: 18px;
+            box-shadow: 0 10px 20px var(--primary-glow); transition: 0.3s;
+        }
+        .confirm-btn:active { transform: scale(0.97); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #loader { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><i class="fas fa-circle-notch fa-spin" style="font-size: 35px; color: var(--primary);"></i></div>
+
+    <div class="page-header">
+        <a href="home.html" class="back-btn"><i class="fas fa-chevron-right"></i></a>
+        <div class="coin-identity">
+            <h1 id="c-name">...</h1>
+            <span id="c-symbol">...</span>
+        </div>
+        <div class="back-btn"><i class="far fa-star"></i></div>
+    </div>
+
+    <div class="price-hero">
+        <div class="current-price" id="c-price">0.00</div>
+        <span class="price-change" id="c-change">0.00%</span>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <small><i class="fas fa-arrow-trend-up"></i> أعلى سعر</small>
+            <b id="s-high">0.00</b>
+        </div>
+        <div class="stat-card">
+            <small><i class="fas fa-arrow-trend-down"></i> أقل سعر</small>
+            <b id="s-low">0.00</b>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div id="mainChart"></div>
+    </div>
+
+    <div class="bottom-actions">
+        <button class="action-float btn-buy-trigger" onclick="openTrade()">
+            <i class="fas fa-bolt"></i> شراء فوري
+        </button>
+        <button class="action-float btn-sell-trigger">
+            بيع
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="overlay" onclick="closeTrade()"></div>
+    <div class="trade-modal" id="tradeModal">
+        <div class="modal-handle"></div>
+        <h3 style="text-align: center; margin: 0 0 25px; font-weight: 800;">تداول العملة</h3>
+        
+        <div class="input-wrapper">
+            <div class="input-header">
+                <span>كمية الشراء</span>
+                <span>الرصيد: <span id="user-balance">0.00</span> ج.م</span>
+            </div>
+            <div class="input-main">
+                <input type="number" id="buyAmount" placeholder="0.00" inputmode="decimal">
+                <div class="token-badge" id="token-name">VXA</div>
+            </div>
+        </div>
+
+        <div class="total-info">
+            <span class="total-label">إجمالي التكلفة التقديرية</span>
+            <div class="total-amount"><span id="totalPay">0.00</span> <small style="font-size: 14px; opacity: 0.6;">EGP</small></div>
+        </div>
+
+        <button class="confirm-btn" id="finalBuyBtn">تأكيد العملية الآن</button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, getDoc, updateDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const coinId = new URLSearchParams(window.location.search).get('id');
+    let coinData = null;
+    let user = null;
+    let chart = null;
+
+    function initChart() {
+        const options = {
+            chart: { 
+                type: 'area', height: 280, 
+                toolbar: {show: false}, 
+                sparkline: {enabled: false},
+                animations: {enabled: true, easing: 'linear', dynamicAnimation: {speed: 1000}} 
+            },
+            stroke: { curve: 'smooth', width: 3 },
+            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.02 } },
+            series: [{ name: 'السعر', data: [] }],
+            xaxis: { type: 'datetime', labels: {show: false}, axisBorder: {show: false}, axisTicks: {show: false} },
+            yaxis: { show: false },
+            grid: { show: false },
+            tooltip: { theme: 'dark', x: {format: 'HH:mm:ss'} },
+            colors: ['#0ea5e9']
+        };
+        chart = new ApexCharts(document.querySelector("#mainChart"), options);
+        chart.render();
+    }
+
+    onAuthStateChanged(auth, async (u) => { 
+        if(u) { 
+            user = u; 
+            const uSnap = await getDoc(doc(db, "users", user.uid));
+            if(uSnap.exists()) document.getElementById('user-balance').innerText = uSnap.data().walletBalance.toFixed(2);
+            loadPage(); 
+        } else { window.location.href = 'index.html'; }
+    });
+
+    async function loadPage() {
+        if(!coinId) return;
+        initChart();
+
+        onSnapshot(doc(db, "marketCoins", coinId), (snap) => {
+            if(!snap.exists()) return;
+            coinData = { id: snap.id, ...snap.data() };
+            
+            document.getElementById('c-name').innerText = coinData.name;
+            document.getElementById('c-symbol').innerText = coinData.symbol + ' / EGP';
+            document.getElementById('c-price').innerText = coinData.price.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('token-name').innerText = coinData.symbol;
+            
+            const changeEl = document.getElementById('c-change');
+            const isUp = coinData.change >= 0;
+            changeEl.innerHTML = `<i class="fas fa-caret-${isUp ? 'up' : 'down'}"></i> ${Math.abs(coinData.change)}%`;
+            changeEl.className = 'price-change ' + (isUp ? 'up' : 'down');
+
+            document.getElementById('s-high').innerText = (coinData.price * (1 + (Math.random()*0.01))).toFixed(2);
+            document.getElementById('s-low').innerText = (coinData.price * (1 - (Math.random()*0.01))).toFixed(2);
+
+            const now = new Date().getTime();
+            updateChart({ x: now, y: coinData.price }, isUp);
+
+            document.getElementById('loader').style.display = 'none';
+        });
+    }
+
+    function updateChart(point, isUp) {
+        let currentSeries = chart.w.config.series[0].data;
+        if(currentSeries.length === 0) {
+            for(let i=15; i>0; i--) currentSeries.push({ x: point.x - (i*5000), y: point.y * (1 + (Math.random()-0.5)*0.01) });
+        }
+        currentSeries.push(point);
+        if(currentSeries.length > 30) currentSeries.shift();
+        chart.updateSeries([{ data: currentSeries }]);
+        chart.updateOptions({ colors: [isUp ? '#10b981' : '#ef4444'] });
+    }
+
+    window.openTrade = () => {
+        document.getElementById('tradeModal').classList.add('active');
+        document.getElementById('overlay').style.display = 'block';
+    }
+    window.closeTrade = () => {
+        document.getElementById('tradeModal').classList.remove('active');
+        document.getElementById('overlay').style.display = 'none';
+    }
+
+    document.getElementById('buyAmount').oninput = (e) => {
+        const val = parseFloat(e.target.value) || 0;
+        document.getElementById('totalPay').innerText = (val * coinData.price).toLocaleString('en-US', {minimumFractionDigits: 2});
+    }
+
+    document.getElementById('finalBuyBtn').onclick = async () => {
+        const amount = parseFloat(document.getElementById('buyAmount').value);
+        if(!amount || amount <= 0) return;
+
+        const total = amount * coinData.price;
+        const userRef = doc(db, "users", user.uid);
+        const uSnap = await getDoc(userRef);
+        
+        if(uSnap.data().walletBalance < total) return Swal.fire({icon: 'error', title: 'عذراً', text: 'رصيدك الحالي لا يكفي لإتمام العملية', background: '#0f172a', color: '#fff'});
+
+        Swal.fire({title: 'جاري معالجة العملية...', background: '#0f172a', color: '#fff', didOpen: () => Swal.showLoading()});
+
+        try {
+            await updateDoc(userRef, { walletBalance: increment(-total) });
+            const assetRef = doc(db, "users", user.uid, "myAssets", coinId);
+            const aSnap = await getDoc(assetRef);
+
+            if(aSnap.exists()) {
+                await updateDoc(assetRef, { amount: increment(amount) });
+            } else {
+                await setDoc(assetRef, { name: coinData.name, symbol: coinData.symbol, amount: amount });
+            }
+            
+            Swal.fire({icon: 'success', title: 'تمت العملية', text: 'تم إضافة العملات لمحفظتك بنجاح', background: '#0f172a', color: '#fff'}).then(() => closeTrade());
+        } catch (e) {
+            Swal.fire({icon: 'error', title: 'فشلت العملية', text: 'حدث خطأ ما، حاول مرة أخرى', background: '#0f172a', color: '#fff'});
+        }
+    }
+</script>
+</body>
+</html>

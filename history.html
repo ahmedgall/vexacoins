@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexa | سجل المعاملات الاحترافي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --bg: #020617;
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle at top right, #0f172a, #020617);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 20px 100px;
+            min-height: 100vh;
+        }
+
+        /* الهيدر الاحترافي */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 10px;
+        }
+
+        .page-header h1 { font-size: 24px; font-weight: 900; margin: 0; }
+        .refresh-btn { 
+            width: 40px; height: 40px; border-radius: 12px; 
+            background: var(--card-bg); border: 1px solid var(--glass-border);
+            color: var(--primary); display: flex; align-items: center; justify-content: center;
+        }
+
+        /* قائمة السجلات */
+        .history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .trx-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        .trx-card:hover {
+            transform: translateY(-5px);
+            background: rgba(30, 41, 59, 0.6);
+            border-color: var(--primary);
+        }
+
+        .icon-box {
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .in-gradient {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .out-gradient {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05));
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .info-box { flex-grow: 1; }
+        .info-box .title { display: block; font-weight: 800; font-size: 16px; margin-bottom: 2px; }
+        .info-box .status { 
+            font-size: 11px; font-weight: 700; padding: 2px 8px; 
+            border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-dim);
+        }
+
+        .amount-box { text-align: left; }
+        .amount-box .val { display: block; font-weight: 900; font-size: 17px; font-family: 'Inter', sans-serif; }
+        .amount-box .date { font-size: 10px; color: var(--text-dim); display: block; margin-top: 4px; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center; margin-top: 100px; opacity: 0.5;
+        }
+        .empty-state i { font-size: 50px; margin-bottom: 15px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <div>
+            <h1>النشاطات</h1>
+            <span style="color: var(--text-dim); font-size: 12px;">مراقبة حركة أموالك</span>
+        </div>
+        <button class="refresh-btn" onclick="location.reload()"><i class="fas fa-rotate"></i></button>
+    </div>
+
+    <div id="loader" style="text-align: center; padding-top: 50px;">
+        <i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--primary);"></i>
+    </div>
+
+    <div class="history-container" id="history-list">
+        </div>
+
+    <div id="empty-view" class="empty-state" style="display: none;">
+        <i class="fas fa-receipt"></i>
+        <p>لا توجد معاملات مسجلة بعد</p>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) { loadTransactions(user.uid); } 
+        else { window.location.href = 'index.html'; }
+    });
+
+    function loadTransactions(uid) {
+        const list = document.getElementById('history-list');
+        const loader = document.getElementById('loader');
+        const empty = document.getElementById('empty-view');
+
+        const q = query(collection(db, "transactions"), orderBy("timestamp", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            loader.style.display = 'none';
+            list.innerHTML = '';
+            let count = 0;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.from === uid || data.to === uid) {
+                    count++;
+                    const isOut = data.from === uid;
+                    const dateStr = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString('ar-EG', {
+                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                    }) : 'قيد التأكيد...';
+
+                    const card = `
+                        <div class="trx-card" style="animation-delay: ${count * 0.1}s">
+                            <div class="icon-box ${isOut ? 'out-gradient' : 'in-gradient'}">
+                                <i class="fas ${isOut ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+                            </div>
+                            <div class="info-box">
+                                <span class="title">${isOut ? 'إرسال عملات' : 'استلام عملات'}</span>
+                                <span class="status">${isOut ? 'إلى: VX-' + (data.to ? data.to.substring(0,6) : '---') : 'مكتملة'}</span>
+                            </div>
+                            <div class="amount-box">
+                                <span class="val" style="color: ${isOut ? 'var(--danger)' : 'var(--success)'}">
+                                    ${isOut ? '-' : '+'}${data.amount} ${data.asset}
+                                </span>
+                                <span class="date">${dateStr}</span>
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += card;
+                }
+            });
+
+            empty.style.display = count === 0 ? 'block' : 'none';
+        });
+    }
+</script>
+</body>
+</html>

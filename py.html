@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexa Admin | إدارة العمليات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --primary: #0ea5e9; --bg: #020617; --card: rgba(30, 41, 59, 0.7); --success: #10b981; --danger: #ef4444; --warning: #f59e0b; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
+        
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: white; cursor: pointer; font-family: 'Cairo'; font-weight: 700; }
+        .tab-btn.active { background: var(--primary); border-color: var(--primary); }
+
+        .request-card {
+            background: var(--card); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 22px; padding: 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.3s;
+        }
+
+        .type-badge { padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 900; margin-bottom: 8px; display: inline-block; }
+        .badge-deposit { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .badge-withdraw { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        .req-main b { font-size: 19px; display: block; margin: 5px 0; }
+        .req-sub { font-size: 12px; color: #94a3b8; }
+        
+        .actions { display: flex; gap: 8px; }
+        .btn { padding: 10px 18px; border-radius: 12px; border: none; cursor: pointer; font-weight: 700; font-family: 'Cairo'; font-size: 13px; }
+        .btn-done { background: var(--success); color: white; }
+        .btn-cancel { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+        #list-container { min-height: 200px; }
+        .empty-msg { text-align: center; padding: 60px; opacity: 0.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1 style="margin:0; font-size: 22px;">لوحة تحكم Vexa</h1>
+        <p style="color: #94a3b8; font-size: 13px; margin: 5px 0 0;">مراجعة طلبات الإيداع والسحب المعلقة</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="filterType('all')">الكل</button>
+        <button class="tab-btn" onclick="filterType('deposit')">إيداعات</button>
+        <button class="tab-btn" onclick="filterType('withdraw')">سحوبات</button>
+    </div>
+
+    <div id="list-container">
+        </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, runTransaction, increment } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let currentFilter = 'all';
+
+    function renderRequests() {
+        const list = document.getElementById('list-container');
+        const q = query(collection(db, "transactions"), where("status", "==", "pending"));
+
+        onSnapshot(q, (snapshot) => {
+            list.innerHTML = '';
+            let count = 0;
+
+            snapshot.forEach((d) => {
+                const data = d.data();
+                if (currentFilter !== 'all' && data.type !== currentFilter) return;
+                count++;
+
+                const isDep = data.type === 'deposit';
+                const card = document.createElement('div');
+                card.className = 'request-card';
+                card.innerHTML = `
+                    <div class="req-main">
+                        <span class="type-badge ${isDep ? 'badge-deposit' : 'badge-withdraw'}">
+                            ${isDep ? 'طلب إيداع' : 'طلب سحب كاش'}
+                        </span>
+                        <b>${isDep ? data.amount + ' ج.م' : data.egp_value + ' ج.م'}</b>
+                        <div class="req-sub">
+                            <span><i class="fas fa-user"></i> ID: ${data.uid.substring(0,6)}</span> | 
+                            <span><i class="fas fa-phone"></i> ${isDep ? data.sender_phone : data.method}</span>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-done" onclick="approveTask('${d.id}', '${data.uid}', ${isDep ? data.amount : 0}, '${data.type}')">تأكيد</button>
+                        <button class="btn btn-cancel" onclick="rejectTask('${d.id}', '${data.uid}', ${!isDep ? data.amount : 0}, '${data.asset}', '${data.type}')">رفض</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            if (count === 0) list.innerHTML = '<div class="empty-msg">لا توجد طلبات معلقة حالياً</div>';
+        });
+    }
+
+    // تأكيد الطلب
+    window.approveTask = async (id, uid, amount, type) => {
+        const confirm = await Swal.fire({ title: 'هل أنت متأكد؟', text: "سيتم إنهاء المعاملة فوراً", icon: 'question', showCancelButton: true });
+        if (!confirm.isConfirmed) return;
+
+        Swal.fire({ title: 'جاري التنفيذ...', didOpen: () => Swal.showLoading() });
+
+        try {
+            if (type === 'deposit') {
+                // إيداع: نحتاج إضافة الرصيد للمحفظة
+                await runTransaction(db, async (ts) => {
+                    ts.update(doc(db, "users", uid), { walletBalance: increment(amount) });
+                    ts.update(doc(db, "transactions", id), { status: 'completed' });
+                });
+            } else {
+                // سحب: الرصيد مخصوم بالفعل، فقط نغير الحالة
+                await updateDoc(doc(db, "transactions", id), { status: 'completed' });
+            }
+            Swal.fire('تم!', 'تم تحديث العملية بنجاح', 'success');
+        } catch (e) { Swal.fire('خطأ', 'فشلت العملية', 'error'); }
+    };
+
+    // رفض الطلب
+    window.rejectTask = async (id, uid, amount, asset, type) => {
+        const confirm = await Swal.fire({ title: 'رفض الطلب؟', text: "سيتم إلغاء المعاملة", icon: 'warning', showCancelButton: true });
+        if (!confirm.isConfirmed) return;
+
+        try {
+            if (type === 'withdraw') {
+                // سحب: إذا رفضت، يجب إعادة العملات لمحفظة المستخدم
+                await runTransaction(db, async (ts) => {
+                    const assetRef = doc(db, "users", uid, "myAssets", asset.toLowerCase()); // تأكد من اسم الـ ID
+                    ts.update(assetRef, { amount: increment(amount) });
+                    ts.update(doc(db, "transactions", id), { status: 'rejected' });
+                });
+            } else {
+                await updateDoc(doc(db, "transactions", id), { status: 'rejected' });
+            }
+            Swal.fire('تم الرفض', 'تم إلغاء الطلب وإرجاع الحقوق', 'info');
+        } catch (e) { Swal.fire('خطأ', 'فشلت العملية', 'error'); }
+    };
+
+    window.filterType = (t) => {
+        currentFilter = t;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        renderRequests();
+    };
+
+    renderRequests();
+</script>
+</body>
+</html>

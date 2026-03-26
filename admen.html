@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | إدارة العملات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; background: #0f172a; color: white; padding: 20px; }
+        .admin-card { background: #1e293b; padding: 20px; border-radius: 15px; max-width: 500px; margin: 0 auto 30px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0ea5e9; border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .coin-item { background: #334155; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .coin-item input { width: 80px; margin: 0 5px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h2 style="text-align: center;">إضافة عملة جديدة</h2>
+    <div class="admin-card">
+        <input type="text" id="newName" placeholder="اسم العملة (مثال: Vexa Coin)">
+        <input type="text" id="newSymbol" placeholder="الرمز (مثال: VEXA)">
+        <input type="number" id="newPrice" placeholder="السعر الابتدائي (EGP)">
+        <button onclick="addNewCoin()">إضافة للسوق</button>
+    </div>
+
+    <h2 style="text-align: center;">التحكم في الأسعار الحالية</h2>
+    <div id="admin-market-list" style="max-width: 600px; margin: 0 auto;">
+        </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+
+    // ✅ إعدادات مشروعك vexa-4b2fb
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        storageBucket: "vexa-4b2fb.firebasestorage.app",
+        messagingSenderId: "977620445308",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 1. وظيفة إضافة عملة جديدة
+    window.addNewCoin = async () => {
+        const name = document.getElementById('newName').value;
+        const symbol = document.getElementById('newSymbol').value.toUpperCase();
+        const price = parseFloat(document.getElementById('newPrice').value);
+
+        if(!name || !symbol || !price) return alert("أكمل البيانات");
+
+        try {
+            await addDoc(collection(db, "marketCoins"), {
+                name: name,
+                symbol: symbol,
+                price: price,
+                change: 0,
+                lastUpdate: new Date()
+            });
+            Swal.fire('تمت الإضافة', 'العملة الآن متاحة في الصفحة الرئيسية', 'success');
+        } catch (e) { console.error(e); }
+    };
+
+    // 2. عرض العملات للتعديل اللحظي
+    onSnapshot(collection(db, "marketCoins"), (snapshot) => {
+        const list = document.getElementById('admin-market-list');
+        list.innerHTML = '';
+        snapshot.forEach((coinDoc) => {
+            const coin = coinDoc.data();
+            const div = document.createElement('div');
+            div.className = 'coin-item';
+            div.innerHTML = `
+                <div>
+                    <strong>${coin.symbol}</strong>
+                </div>
+                <div>
+                    <input type="number" step="0.01" value="${coin.price}" id="p-${coinDoc.id}"> EGP
+                    <input type="number" step="0.1" value="${coin.change}" id="c-${coinDoc.id}"> %
+                    <button onclick="updatePrice('${coinDoc.id}')" style="width: auto; padding: 5px 10px;">تحديث</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    });
+
+    // 3. وظيفة تحديث السعر والنسبة
+    window.updatePrice = async (id) => {
+        const newP = parseFloat(document.getElementById(`p-${id}`).value);
+        const newC = parseFloat(document.getElementById(`c-${id}`).value);
+        
+        try {
+            await updateDoc(doc(db, "marketCoins", id), {
+                price: newP,
+                change: newC,
+                lastUpdate: new Date()
+            });
+            Swal.fire({ title: 'تم التحديث', timer: 1000, icon: 'success', showConfirmButton: false });
+        } catch (e) { alert("خطأ في التحديث"); }
+    };
+</script>
+</body>
+</html>

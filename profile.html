@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexa | الحساب الشخصي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --bg-dark: #020617;
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --text-dim: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg-dark);
+            background-image: radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 50%);
+            color: white;
+            margin: 0; padding: 20px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+        }
+
+        /* كارت الهوية الاحترافي */
+        .id-card {
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: 30px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .id-card::after {
+            content: "\f2bb"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; left: -20px; bottom: -20px;
+            font-size: 120px; opacity: 0.1; transform: rotate(-15deg);
+        }
+
+        .user-meta h2 { margin: 0; font-size: 24px; font-weight: 900; }
+        .user-meta p { margin: 5px 0 0; font-size: 14px; opacity: 0.8; }
+
+        .v-id-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .v-id-label { font-size: 11px; display: block; opacity: 0.7; }
+        .v-id-num { font-family: 'Inter'; font-weight: 700; letter-spacing: 1px; }
+
+        /* الأزرار والإعدادات */
+        .settings-list {
+            background: var(--card-bg);
+            border-radius: 25px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+
+        .setting-row {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+        }
+
+        .setting-row:last-child { border-bottom: none; }
+        .setting-row i { color: var(--primary); width: 25px; font-size: 18px; }
+        .setting-row span { flex: 1; margin-right: 15px; font-weight: 600; }
+
+        .btn-logout {
+            margin-top: 25px;
+            width: 100%;
+            padding: 18px;
+            border-radius: 20px;
+            border: none;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            font-family: 'Cairo';
+            font-weight: 800;
+            cursor: pointer;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="font-weight: 900; font-size: 22px; margin-bottom: 25px;">الملف الشخصي</h1>
+
+    <div class="id-card">
+        <div class="user-meta">
+            <h2 id="user-name">...</h2>
+            <p id="user-phone">01xxxxxxxxx</p>
+        </div>
+        
+        <div class="v-id-box" onclick="copyMyID()">
+            <div>
+                <span class="v-id-label">معرف التحويل (VX ID)</span>
+                <span class="v-id-num" id="display-v-id">VX-XXXXXX</span>
+            </div>
+            <i class="fas fa-copy"></i>
+        </div>
+    </div>
+
+    <div class="settings-list">
+        <div class="setting-row" onclick="updateProfileName()">
+            <i class="fas fa-user-pen"></i>
+            <span>تعديل اسم الحساب</span>
+            <i class="fas fa-chevron-left" style="font-size: 12px; color: var(--text-dim);"></i>
+        </div>
+
+        <div class="setting-row" onclick="updateSecurity()">
+            <i class="fas fa-shield-halved"></i>
+            <span>الأمان وكلمة المرور</span>
+            <i class="fas fa-chevron-left" style="font-size: 12px; color: var(--text-dim);"></i>
+        </div>
+
+        <div class="setting-row">
+            <i class="fas fa-headset"></i>
+            <span>الدعم الفني</span>
+            <i class="fas fa-chevron-left" style="font-size: 12px; color: var(--text-dim);"></i>
+        </div>
+    </div>
+
+    <button class="btn-logout" id="logout-btn">
+        <i class="fas fa-right-from-bracket"></i> تسجيل الخروج
+    </button>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getAuth, signOut, updatePassword } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+
+    // ✅ استخدام نفس بيانات مشروعك
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzcP_T8x5ouwwKkhadtBTdsUxk3XqwJec",
+        authDomain: "vexa-4b2fb.firebaseapp.com",
+        projectId: "vexa-4b2fb",
+        appId: "1:977620445308:web:fec22230e1fbb30c8881f9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            fetchUserData(user.uid);
+        } else {
+            window.location.href = "login.html"; // توجيه لصفحة الدخول لو مش مسجل
+        }
+    });
+
+    // جلب البيانات بناءً على الحقول في الـ Register
+    function fetchUserData(uid) {
+        onSnapshot(doc(db, "users", uid), (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                document.getElementById('user-name').innerText = data.username || "مستخدم فيكسا";
+                document.getElementById('user-phone').innerText = data.phone || "بدون رقم";
+                // إنشاء ID مختصر وسهل (أول 6 حروف من الـ UID)
+                document.getElementById('display-v-id').innerText = `VX-${uid.substring(0, 6).toUpperCase()}`;
+            }
+        });
+    }
+
+    // وظيفة النسخ
+    window.copyMyID = () => {
+        const id = document.getElementById('display-v-id').innerText;
+        navigator.clipboard.writeText(id);
+        Swal.fire({ icon: 'success', title: 'تم النسخ', text: 'يمكنك الآن إرسال الـ ID لاستلام العملات', timer: 2000, showConfirmButton: false });
+    };
+
+    // تعديل الاسم
+    window.updateProfileName = async () => {
+        const { value: newName } = await Swal.fire({
+            title: 'تعديل الاسم',
+            input: 'text',
+            inputLabel: 'أدخل الاسم الجديد',
+            showCancelButton: true
+        });
+
+        if (newName) {
+            await updateDoc(doc(db, "users", auth.currentUser.uid), { username: newName });
+            Swal.fire('تم!', 'تم تحديث الاسم بنجاح', 'success');
+        }
+    };
+
+    // تسجيل الخروج
+    document.getElementById('logout-btn').onclick = () => {
+        signOut(auth).then(() => window.location.href = "index.html");
+    };
+
+    // تغيير الباسورد (مبسط)
+    window.updateSecurity = () => {
+        Swal.fire({
+            title: 'تغيير كلمة المرور',
+            text: 'سيتم إرسال تعليمات الأمان أو يمكنك تغييرها من هنا إذا كنت مسجلاً دخولك حديثاً.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'تغيير الآن'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { value: pass } = await Swal.fire({ title: 'الباسورد الجديد', input: 'password', inputPlaceholder: '6 أحرف على الأقل' });
+                if (pass && pass.length >= 6) {
+                    updatePassword(auth.currentUser, pass).then(() => {
+                        Swal.fire('تم!', 'تم تغيير الباسورد', 'success');
+                    }).catch(err => Swal.fire('فشل', 'يجب تسجيل الدخول مرة أخرى قبل هذا الإجراء للأمان', 'error'));
+                }
+            }
+        });
+    };
+</script>
+</body>
+</html>
