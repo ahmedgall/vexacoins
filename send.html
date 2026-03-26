@@ -8,74 +8,85 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary: #0ea5e9; --bg: #020617; --card: rgba(30, 41, 59, 0.7); --text-dim: #94a3b8; }
+        :root { --primary: #0ea5e9; --bg: #020617; --card: rgba(30, 41, 59, 0.7); --text-dim: #94a3b8; --success: #10b981; }
         body { font-family: 'Cairo', sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; }
         
         .transfer-card {
             background: var(--card); backdrop-filter: blur(15px);
             border-radius: 28px; padding: 25px; border: 1px solid rgba(255,255,255,0.1);
-            max-width: 450px; margin: 20px auto;
+            max-width: 450px; margin: 20px auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
 
-        .asset-select {
-            width: 100%; padding: 15px; background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px; color: white; font-family: 'Cairo'; margin-bottom: 20px; outline: none;
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 8px; font-weight: 700; }
+        
+        input, .asset-select {
+            width: 100%; padding: 16px; background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 18px;
+            color: white; font-family: 'Cairo'; outline: none; box-sizing: border-box; transition: 0.3s;
         }
+        input:focus { border-color: var(--primary); background: #0f172a; }
 
         .balance-info {
-            background: rgba(14, 165, 233, 0.1); padding: 12px; border-radius: 12px;
+            background: rgba(14, 165, 233, 0.1); padding: 14px; border-radius: 15px;
             margin-bottom: 20px; display: flex; justify-content: space-between; font-size: 13px;
-        }
-
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 5px; }
-        
-        input {
-            width: 100%; padding: 15px; background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 15px;
-            color: white; font-family: 'Cairo'; outline: none; box-sizing: border-box;
+            border: 1px dashed var(--primary);
         }
 
         .btn-send {
-            width: 100%; padding: 16px; border-radius: 15px; border: none;
+            width: 100%; padding: 18px; border-radius: 18px; border: none;
             background: linear-gradient(135deg, var(--primary), #6366f1);
-            color: white; font-weight: 800; cursor: pointer; margin-top: 10px;
+            color: white; font-weight: 800; font-size: 16px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.2);
         }
+
+        /* ستايل إيصال النجاح (InstaPay Style) */
+        .success-receipt { text-align: center; padding: 10px; }
+        .check-icon { font-size: 60px; color: var(--success); margin-bottom: 15px; animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .receipt-amt { font-size: 32px; font-weight: 900; margin: 10px 0; color: #fff; }
+        .receipt-details { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-top: 15px; font-size: 14px; }
+        .receipt-row { display: flex; justify-content: space-between; margin: 5px 0; color: var(--text-dim); }
+
+        @keyframes scaleUp { from { transform: scale(0); } to { transform: scale(1); } }
     </style>
 </head>
 <body>
 
     <div class="transfer-card">
-        <h2 style="text-align: center;">إرسال عملات مشفرة</h2>
+        <div style="text-align: center; margin-bottom: 25px;">
+            <i class="fas fa-paper-plane" style="color: var(--primary); font-size: 30px;"></i>
+            <h2 style="margin: 10px 0 5px;">إرسال رقمي سريع</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin: 0;">التحويل يتم فوراً عبر شبكة Vexa</p>
+        </div>
 
         <div class="input-group">
-            <label>اختر العملة من محفظتك</label>
+            <label>اختر الأصل الرقمي</label>
             <select id="asset-selector" class="asset-select">
-                <option value="">جاري تحميل محفظتك...</option>
+                <option value="">جاري فحص محفظتك...</option>
             </select>
         </div>
 
         <div class="balance-info">
-            <span>رصيدك من هذه العملة:</span>
-            <b id="available-amount">0.00</b>
+            <span>الرصيد المتاح:</span>
+            <b id="available-amount" style="color: var(--primary);">0.00</b>
         </div>
 
         <div class="input-group">
             <label>معرف المستلم (VX ID)</label>
-            <input type="text" id="receiver-id" placeholder="VX-XXXXXX">
+            <input type="text" id="receiver-id" placeholder="VX-XXXXXX" autocomplete="off">
         </div>
 
         <div class="input-group">
-            <label>الكمية المراد إرسالها</label>
-            <input type="number" id="send-amount" placeholder="0.00">
+            <label>الكمية</label>
+            <input type="number" id="send-amount" placeholder="0.00" step="any">
         </div>
 
-        <button class="btn-send" id="execute-transfer">تأكيد التحويل المشفر</button>
+        <button class="btn-send" id="execute-transfer">تأكيد وإرسال الآن</button>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, getDoc, getDocs, collection, runTransaction, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, getDocs, collection, runTransaction, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
     import { getAuth } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -89,11 +100,13 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // تجهيز صوت النجاح
+    const cashSound = new Audio('https://www.myinstants.com/media/sounds/cash-register-purchase.mp3');
+
     let myAssets = {};
 
     auth.onAuthStateChanged(user => {
         if (user) {
-            // جلب العملات التي يمتلكها المستخدم فقط
             onSnapshot(collection(db, "users", user.uid, "myAssets"), (snap) => {
                 const selector = document.getElementById('asset-selector');
                 selector.innerHTML = '<option value="">اختر العملة</option>';
@@ -101,7 +114,7 @@
                 snap.forEach(doc => {
                     const data = doc.data();
                     myAssets[doc.id] = data;
-                    selector.innerHTML += `<option value="${doc.id}">${data.symbol} (${data.name || doc.id})</option>`;
+                    selector.innerHTML += `<option value="${doc.id}">${data.symbol} - ${data.name || doc.id}</option>`;
                 });
             });
         }
@@ -109,7 +122,7 @@
 
     document.getElementById('asset-selector').onchange = (e) => {
         const asset = myAssets[e.target.value];
-        document.getElementById('available-amount').innerText = asset ? `${asset.amount} ${asset.symbol}` : "0.00";
+        document.getElementById('available-amount').innerText = asset ? `${asset.amount.toFixed(2)} ${asset.symbol}` : "0.00";
     };
 
     document.getElementById('execute-transfer').onclick = async () => {
@@ -117,12 +130,11 @@
         const vxid = document.getElementById('receiver-id').value.trim();
         const amount = parseFloat(document.getElementById('send-amount').value);
 
-        if (!assetId || !vxid || !amount || amount <= 0) return Swal.fire('تنبيه', 'أكمل البيانات', 'warning');
-        if (amount > myAssets[assetId].amount) return Swal.fire('خطأ', 'رصيدك غير كافٍ', 'error');
+        if (!assetId || !vxid || !amount || amount <= 0) return Swal.fire('تنبيه', 'برجاء إدخال بيانات صحيحة', 'warning');
+        if (amount > myAssets[assetId].amount) return Swal.fire('خطأ', 'رصيدك غير كافٍ للعملية', 'error');
 
-        Swal.fire({ title: 'جاري التحقق...', didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'جاري مراجعة الشبكة...', didOpen: () => Swal.showLoading(), background: '#020617', color: '#fff' });
 
-        // البحث عن المستلم عبر الـ ID
         const cleanID = vxid.replace("VX-", "").toLowerCase();
         const usersSnap = await getDocs(collection(db, "users"));
         let receiverUID = null;
@@ -131,17 +143,23 @@
         usersSnap.forEach(uDoc => {
             if (uDoc.id.substring(0, 6).toLowerCase() === cleanID) {
                 receiverUID = uDoc.id;
-                receiverName = uDoc.data().username;
+                receiverName = uDoc.data().username || "مستخدم فيكسا";
             }
         });
 
-        if (!receiverUID) return Swal.fire('خطأ', 'المستلم غير موجود', 'error');
+        if (!receiverUID) return Swal.fire('خطأ', 'معرف المستلم غير صحيح', 'error');
         if (receiverUID === auth.currentUser.uid) return Swal.fire('تنبيه', 'لا يمكنك الإرسال لنفسك', 'info');
 
         const confirm = await Swal.fire({
-            title: 'تأكيد الإرسال',
-            text: `هل ترغب في إرسال ${amount} ${myAssets[assetId].symbol} إلى ${receiverName}؟`,
-            icon: 'warning', showCancelButton: true
+            title: 'تأكيد العملية',
+            html: `<div style="color:#94a3b8">أنت على وشك إرسال</div> <div style="font-size:24px; font-weight:900; color:#fff; margin:10px 0;">${amount} ${myAssets[assetId].symbol}</div> <div style="color:#94a3b8">إلى المستلم: <b>${receiverName}</b></div>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'إرسال الآن',
+            cancelButtonText: 'إلغاء',
+            background: '#0f172a',
+            color: '#fff',
+            confirmButtonColor: '#0ea5e9'
         });
 
         if (confirm.isConfirmed) {
@@ -149,38 +167,53 @@
                 await runTransaction(db, async (ts) => {
                     const myAssetRef = doc(db, "users", auth.currentUser.uid, "myAssets", assetId);
                     const hisAssetRef = doc(db, "users", receiverUID, "myAssets", assetId);
-
                     const myAssetSnap = await ts.get(myAssetRef);
                     const hisAssetSnap = await ts.get(hisAssetRef);
 
-                    // خصم من الراسل
                     ts.update(myAssetRef, { amount: myAssetSnap.data().amount - amount });
 
-                    // إضافة للمستلم (أو إنشاء الأصل له لو مش عنده)
                     if (hisAssetSnap.exists()) {
                         ts.update(hisAssetRef, { amount: hisAssetSnap.data().amount + amount });
                     } else {
-                        ts.set(hisAssetRef, { 
-                            amount: amount, 
-                            symbol: myAssets[assetId].symbol, 
-                            name: myAssets[assetId].name || assetId 
-                        });
+                        ts.set(hisAssetRef, { amount: amount, symbol: myAssets[assetId].symbol, name: myAssets[assetId].name || assetId });
                     }
 
-                    // سجل التحويلات
                     addDoc(collection(db, "transactions"), {
                         from: auth.currentUser.uid,
                         to: receiverUID,
                         asset: myAssets[assetId].symbol,
                         amount: amount,
-                        type: 'crypto_transfer',
+                        type: 'transfer',
                         timestamp: serverTimestamp()
                     });
                 });
 
-                Swal.fire('تم الإرسال', 'وصلت العملات للمستلم بنجاح', 'success');
+                // تشغيل الصوت
+                cashSound.play().catch(e => console.log("Audio play deferred"));
+
+                // إظهار إيصال النجاح (InstaPay Style)
+                Swal.fire({
+                    background: '#020617',
+                    html: `
+                        <div class="success-receipt">
+                            <div class="check-icon"><i class="fas fa-check-circle"></i></div>
+                            <h2 style="color:#fff; margin:0;">تم التحويل بنجاح</h2>
+                            <div class="receipt-amt">${amount} ${myAssets[assetId].symbol}</div>
+                            <div class="receipt-details">
+                                <div class="receipt-row"><span>المستلم:</span> <span>${receiverName}</span></div>
+                                <div class="receipt-row"><span>رقم العملية:</span> <span>#${Math.floor(Math.random()*900000)+100000}</span></div>
+                                <div class="receipt-row"><span>التاريخ:</span> <span>الآن</span></div>
+                            </div>
+                            <p style="color: var(--success); font-size:12px; margin-top:15px;"><i class="fas fa-shield-alt"></i> عملية مؤمنة عبر Vexa Crypto</p>
+                        </div>
+                    `,
+                    showConfirmButton: true,
+                    confirmButtonText: 'إغلاق',
+                    confirmButtonColor: '#10b981'
+                });
+
                 document.getElementById('send-amount').value = '';
-            } catch (e) { Swal.fire('فشل', e.toString(), 'error'); }
+            } catch (e) { Swal.fire('فشل', 'حدث خطأ في الشبكة، حاول ثانية', 'error'); }
         }
     };
 </script>
