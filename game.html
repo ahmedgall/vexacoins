@@ -2,216 +2,158 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vexa Games | عالم الأرباح</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vexa Bet | الرئيسية</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #0ea5e9;
-            --primary-glow: rgba(14, 165, 233, 0.4);
-            --secondary: #10b981;
-            --secondary-glow: rgba(16, 185, 129, 0.4);
             --bg: #020617;
-            --card-bg: rgba(30, 41, 59, 0.5);
-            --accent: #f59e0b;
-            --text-main: #f8fafc;
+            --card-glass: rgba(30, 41, 59, 0.4);
             --text-dim: #94a3b8;
         }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background: radial-gradient(circle at top right, #0f172a, #020617);
-            background-attachment: fixed;
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 100px; /* لترك مساحة للناف بار السفلي */
-            overflow-x: hidden;
-            position: relative;
+            background: radial-gradient(circle at top, #0f172a, #020617);
+            color: white; margin: 0; padding: 0;
+            overflow-x: hidden; padding-bottom: 90px;
         }
 
-        /* تأثير الخلفية المتحركة (توهج خفيف) */
-        body::before {
-            content: ''; position: absolute; width: 300px; height: 300px;
-            background: var(--primary-glow); border-radius: 50%;
-            filter: blur(100px); top: -100px; left: -100px; opacity: 0.5;
-        }
-
-        /* الهيدر العلوي الاحترافي */
-        .top-nav {
+        /* هيدر نحيف واحترافي */
+        .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px);
-            position: sticky; top: 0; z-index: 1000;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            padding: 12px 20px; background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        .balance-display {
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(255,255,255,0.02));
-            border: 1px solid rgba(14, 165, 233, 0.3);
-            padding: 6px 16px; border-radius: 50px;
-            font-weight: 800; font-size: 15px;
-            display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
-            transition: 0.3s;
-        }
-        .balance-display span { color: #fff; font-family: 'Inter', sans-serif; }
-        .balance-display small { color: rgba(255,255,255,0.8); }
-        .balance-display i { color: var(--primary); font-size: 18px; cursor: pointer; transition: 0.3s; }
-        .balance-display i:hover { color: #fff; transform: scale(1.1); }
+        .logo { font-weight: 900; font-size: 20px; color: var(--primary); letter-spacing: 1px; }
+        .logo span { color: white; }
 
-        /* البانر الترويجي الفخم بأسلوب 1XBET */
-        .promo-banner {
-            margin: 20px;
-            height: 160px;
-            background: linear-gradient(145deg, #1e293b, #0c4a6e);
-            border-radius: 24px;
-            display: flex; flex-direction: column; justify-content: center;
-            padding: 25px; position: relative; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        .balance-chip {
+            background: rgba(14, 165, 233, 0.1); border: 1px solid var(--primary);
+            padding: 4px 12px; border-radius: 50px; display: flex; align-items: center; gap: 8px;
         }
-        .promo-banner::after { content: ''; position: absolute; inset: 0; background: url('https://w0.peakpx.com/wallpaper/705/133/HD-wallpaper-gold-trophy-abstract-trophy-winner.jpg') no-repeat center; background-size: cover; opacity: 0.1; }
-        .promo-banner h2 { margin: 0; font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .promo-banner p { margin: 5px 0 15px; font-size: 14px; color: #e0f2fe; opacity: 0.9; }
+        .balance-chip span { font-weight: 800; font-size: 14px; }
+
+        /* بانر مضغوط */
+        .promo {
+            margin: 15px; padding: 20px; border-radius: 20px;
+            background: linear-gradient(135deg, #075985, #020617);
+            position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .promo h2 { margin: 0; font-size: 20px; font-weight: 900; }
+        .promo p { margin: 5px 0 0; font-size: 12px; color: #bae6fd; }
+
+        /* شبكة الألعاب */
+        .section-label { padding: 0 20px; font-size: 16px; font-weight: 800; color: var(--primary); margin-top: 10px; }
         
-        .promo-btn {
-            width: fit-content; padding: 8px 25px; border-radius: 12px;
-            border: none; background: #fff; color: var(--primary);
-            font-weight: 900; font-size: 14px; font-family: 'Cairo';
-            cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s;
-        }
-        .promo-btn:hover { background: var(--secondary); color: #fff; transform: translateY(-2px); }
-
-        /* الأقسام */
-        .section-title { padding: 0 20px; margin-top: 35px; margin-bottom: 15px; }
-        .section-title h3 { font-size: 19px; font-weight: 800; border-right: 5px solid var(--primary); padding-right: 12px; }
-
-        /* شبكة الألعاب النيون */
-        .games-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 18px; padding: 15px 20px;
+        .grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px;
         }
 
-        .game-card {
-            background: var(--card-bg); backdrop-filter: blur(10px);
-            border-radius: 24px; border: 1px solid rgba(255,255,255,0.06);
-            overflow: hidden; position: relative;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        .card {
+            background: var(--card-glass); border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05); overflow: hidden;
+            transition: 0.3s; position: relative;
         }
-        /* توهج أزرق نيون خفيف عند الاقتراب */
-        .game-card:hover { border-color: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
-        .game-card:active { transform: scale(0.97); }
+        .card:active { transform: scale(0.95); }
 
-        .game-img {
-            height: 120px; display: flex; align-items: center; justify-content: center;
-            font-size: 45px; position: relative;
+        .card-icon {
+            height: 90px; display: flex; align-items: center; justify-content: center;
+            font-size: 35px; background: rgba(255,255,255,0.02);
         }
-        /* تلوين نيون لأيقونات الألعاب */
-        .game-card:nth-child(1) .game-img { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-bottom: 2px solid rgba(239, 68, 68, 0.3); }
-        .game-card:nth-child(2) .game-img { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-bottom: 2px solid rgba(245, 158, 11, 0.3); }
-        .game-card:nth-child(3) .game-img { color: #10b981; background: rgba(16, 185, 129, 0.1); border-bottom: 2px solid rgba(16, 185, 129, 0.3); }
-        .game-card:nth-child(4) .game-img { color: #a855f7; background: rgba(168, 85, 247, 0.1); border-bottom: 2px solid rgba(168, 85, 247, 0.3); }
 
-        .game-info { padding: 15px; text-align: center; }
-        .game-info span { display: block; font-weight: 800; font-size: 15px; color: #fff; }
-        .game-info small { color: var(--text-dim); font-size: 11px; opacity: 0.7; }
+        .card-body { padding: 12px; text-align: center; }
+        .card-body b { display: block; font-size: 14px; margin-bottom: 2px; }
+        .card-body small { font-size: 10px; color: var(--text-dim); }
 
-        .play-btn {
-            background: linear-gradient(90deg, var(--primary), #0284c7);
-            color: white; border: none; width: 100%; padding: 10px;
-            font-weight: 900; font-size: 14px; font-family: 'Cairo'; cursor: pointer;
-            transition: 0.3s;
+        .play-tag {
+            background: var(--primary); color: white; font-size: 10px;
+            font-weight: 900; padding: 2px 8px; border-radius: 4px;
+            position: absolute; top: 10px; left: 10px;
         }
-        .game-card:hover .play-btn { background: var(--secondary); }
 
-        /* ناف بار سفلي زجاجي (نفس صفحة المحفظة) */
-        .bottom-nav { 
-            position: fixed; bottom: 20px; left: 20px; right: 20px;
-            height: 70px; background: rgba(15, 23, 42, 0.85); 
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            display: flex; justify-content: space-around; align-items: center; 
-            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 25px;
-            z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* ناف بار سفلي حقيقي */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; height: 70px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(15px);
+            display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.05); z-index: 1000;
         }
-        
-        .nav-item { color: var(--text-dim); text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 600; transition: 0.3s; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 22px; margin-bottom: 4px; }
 
-        /* تأثير تحميل الأنيميشن */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .games-grid > * { animation: fadeIn 0.5s ease backwards; }
-        .games-grid > *:nth-child(1) { animation-delay: 0.1s; }
-        .games-grid > *:nth-child(2) { animation-delay: 0.2s; }
-        .games-grid > *:nth-child(3) { animation-delay: 0.3s; }
-        .games-grid > *:nth-child(4) { animation-delay: 0.4s; }
+        .nav-link { color: var(--text-dim); text-decoration: none; text-align: center; font-size: 10px; }
+        .nav-link.active { color: var(--primary); }
+        .nav-link i { display: block; font-size: 20px; margin-bottom: 4px; }
+
+        /* ألوان الأيقونات */
+        .c-crash { color: #f43f5e; }
+        .c-mines { color: #10b981; }
+        .c-dice { color: #f59e0b; }
+        .c-wheel { color: #8b5cf6; }
 
     </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <div style="font-weight: 900; font-size: 22px; color: var(--primary); text-shadow: 0 0 10px var(--primary-glow);">VEXA <span style="color:white">BET</span></div>
-        <div class="balance-display">
-            <span id="user-balance">0.00</span>
+    <header class="header">
+        <div class="logo">VEXA<span>BET</span></div>
+        <div class="balance-chip">
+            <i class="fas fa-wallet" style="color:var(--primary)"></i>
+            <span id="bal">0.00</span>
             <small>ج.م</small>
-            <i class="fas fa-plus-circle" onclick="location.href='deposit.html'"></i>
         </div>
+    </header>
+
+    <div class="promo">
+        <h2>بونص الإيداع 200%</h2>
+        <p>اشحن رصيدك الآن وضاعف أرباحك فوراً</p>
+    </div>
+
+    <div class="section-label">ألعاب فيكسا الحصرية</div>
+
+    <div class="grid">
+        <div class="card" onclick="location.href='crash.html'">
+            <div class="play-tag">HOT</div>
+            <div class="card-icon c-crash"><i class="fas fa-rocket"></i></div>
+            <div class="card-body">
+                <b>Vexa Crash</b>
+                <small>ضاعف أموالك</small>
+            </div>
+        </div>
+
+        <div class="card" onclick="location.href='mines.html'">
+            <div class="card-icon c-mines"><i class="fas fa-bomb"></i></div>
+            <div class="card-body">
+                <b>Mines</b>
+                <small>ابحث عن الجواهر</small>
+            </div>
+        </div>
+
+        <div class="card" onclick="location.href='dice.html'">
+            <div class="card-icon c-dice"><i class="fas fa-dice"></i></div>
+            <div class="card-body">
+                <b>Dice</b>
+                <small>توقع الربح</small>
+            </div>
+        </div>
+
+        <div class="card" onclick="location.href='spin.html'">
+            <div class="card-icon c-wheel"><i class="fas fa-dharmachakra"></i></div>
+            <div class="card-body">
+                <b>Wheel</b>
+                <small>عجلة الحظ</small>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-link active"><i class="fas fa-home"></i>الرئيسية</a>
+        <a href="wallet.html" class="nav-link"><i class="fas fa-wallet"></i>المحفظة</a>
+        <a href="profile.html" class="nav-link"><i class="fas fa-user"></i>حسابي</a>
     </nav>
-
-    <div class="promo-banner">
-        <h2>مكافأة 200%</h2>
-        <p>على أول عملية إيداع لك اليوم! لا تفوت الفرصة.</p>
-        <button class="promo-btn" onclick="location.href='deposit.html'">احصل عليها الآن</button>
-    </div>
-
-    <div class="section-title">
-        <h3>الأكثر شعبية</h3>
-    </div>
-
-    <div class="games-grid">
-        <div class="game-card" onclick="location.href='crash.html'">
-            <div class="game-img"><i class="fas fa-plane-up"></i></div>
-            <div class="game-info">
-                <span>Vexa Crash</span>
-                <small>ضاعف أموالك في ثواني</small>
-            </div>
-            <button class="play-btn">العب الآن</button>
-        </div>
-
-        <div class="game-card" onclick="location.href='dice.html'">
-            <div class="game-img"><i class="fas fa-dice"></i></div>
-            <div class="game-info">
-                <span>Dice Under/Over</span>
-                <small>توقع الرقم واربح فوراً</small>
-            </div>
-            <button class="play-btn">العب الآن</button>
-        </div>
-
-        <div class="game-card" onclick="location.href='maine.html'">
-            <div class="game-img"><i class="fas fa-bomb"></i></div>
-            <div class="game-info">
-                <span>Vexa Mines</span>
-                <small>تجنب القنابل وابحث عن الكنز</small>
-            </div>
-            <button class="play-btn">العب الآن</button>
-        </div>
-
-        <div class="game-card" onclick="location.href='spin.html'">
-            <div class="game-img"><i class="fas fa-dot-circle fa-spin"></i></div>
-            <div class="game-info">
-                <span>Wheel of Luck</span>
-                <small>عجلة الحظ لربح الهدايا</small>
-            </div>
-            <button class="play-btn">العب الآن</button>
-        </div>
-    </div>
-
-   
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
@@ -229,16 +171,16 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // جلب الرصيد الحقيقي لايف من الفايربيز (walletBalance)
     onAuthStateChanged(auth, (user) => {
         if (user) {
             onSnapshot(doc(db, "users", user.uid), (doc) => {
                 if (doc.exists()) {
-                    // الـ Screenshot الأخيرة بينت إن الرصيد في حقل اسمه walletBalance
                     const balance = doc.data().walletBalance || 0;
-                    document.getElementById('user-balance').innerText = balance.toLocaleString('en-US', {minimumFractionDigits: 2});
+                    document.getElementById('bal').innerText = balance.toLocaleString('en-US', {minimumFractionDigits: 2});
                 }
             });
+        } else {
+            location.href = 'login.html'; // تحويل للوجين لو مش مسجل
         }
     });
 </script>
